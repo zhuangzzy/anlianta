@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>匹配数据显示测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .match-card {
+      border: 2px solid #ff6b9d;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+      color: white;
+    }
+    .match-info {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 15px;
+      border-radius: 8px;
+      color: #333;
+      margin-top: 10px;
+    }
+    button {
+      background: #ff6b9d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #c44569;
+    }
+  </style>
+</head>
+<body>
+  <h1>匹配数据显示测试</h1>
+  <button onclick="testMatches()">测试匹配显示</button>
+  <div id="results"></div>
+
+  <script>
+    async function testMatches() {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        alert('请先登录');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/matches', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await response.json();
+        console.log('匹配数据：', data);
+
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '<h2>匹配结果：</h2>';
+
+        if (data.success && data.matches && data.matches.length > 0) {
+          data.matches.forEach((match, index) => {
+            const matchCard = document.createElement('div');
+            matchCard.className = 'match-card';
+            matchCard.innerHTML = `
+              <h2>匹配 ${index + 1}</h2>
+              <div class="match-info">
+                <p><strong>对方姓名：</strong> ${match.otherUser?.real_name || '未知'}</p>
+                <p><strong>出生年月：</strong> ${match.otherUser?.birth_date ? new Date(match.otherUser.birth_date).toLocaleDateString('zh-CN') : '未填写'}</p>
+                <p><strong>出生地：</strong> ${match.otherUser?.birth_place || '未填写'}</p>
+                <p><strong>所在地：</strong> ${match.otherUser?.current_location || '未填写'}</p>
+                <p><strong>匹配时间：</strong> ${new Date(match.matched_at).toLocaleString('zh-CN')}</p>
+              </div>
+            `;
+            resultsDiv.appendChild(matchCard);
+          });
+        } else {
+          resultsDiv.innerHTML += '<p>暂无匹配记录</p>';
+        }
+      } catch (error) {
+        console.error('测试失败：', error);
+        alert('测试失败：' + error.message);
+      }
+    }
+  </script>
+</body>
+</html>

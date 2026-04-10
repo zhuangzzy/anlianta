@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据清空验证</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .card {
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .success {
+      background: #d4edda;
+      border-color: #c3e6cb;
+      color: #155724;
+    }
+    .error {
+      background: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    pre {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>数据清空验证</h1>
+  <button onclick="verifyData()">验证数据已清空</button>
+  <div id="results"></div>
+
+  <script>
+    async function verifyData() {
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '<p>正在验证...</p>';
+
+      try {
+        // 检查 auth.users
+        const authResponse = await fetch('/api/admin/users');
+        const authData = await authResponse.json();
+
+        resultsDiv.innerHTML = `
+          <div class="card ${authData.success && authData.total === 0 ? 'success' : 'error'}">
+            <h2>验证结果</h2>
+            <p><strong>用户总数：</strong> ${authData.total}</p>
+            <p><strong>状态：</strong> ${authData.total === 0 ? '✅ 数据已清空' : '❌ 还有用户数据'}</p>
+          </div>
+          <div class="card">
+            <h2>详细信息</h2>
+            <pre>${JSON.stringify(authData, null, 2)}</pre>
+          </div>
+        `;
+
+        if (authData.total > 0) {
+          resultsDiv.innerHTML += `
+            <div class="card error">
+              <h2>⚠️ 警告</h2>
+              <p>还有 ${authData.total} 个用户，请检查：</p>
+              <ul>
+                ${authData.users.map(u => `<li>${u.real_name} - ${u.user_id}</li>`).join('')}
+              </ul>
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultsDiv.innerHTML = `
+          <div class="card error">
+            <h2>验证失败</h2>
+            <p>${error.message}</p>
+          </div>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>
